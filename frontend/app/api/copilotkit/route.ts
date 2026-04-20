@@ -1,16 +1,28 @@
 import {
   CopilotRuntime,
-  GroqAdapter,
+  ExperimentalEmptyAdapter,
   copilotRuntimeNextJSAppRouterEndpoint,
 } from "@copilotkit/runtime";
+import { BuiltInAgent } from "@copilotkit/runtime/v2";
+import { createOpenAI } from "@ai-sdk/openai";
 import { NextRequest } from "next/server";
 
-const serviceAdapter = new GroqAdapter({
-  model: "llama-3.3-70b-versatile",
-  // Reads GROQ_API_KEY from process.env automatically
+// Groq is OpenAI-compatible — pass a model object so BuiltInAgent bypasses
+// its string provider check (resolveModel returns non-strings as-is)
+const groq = createOpenAI({
+  apiKey: process.env.GROQ_API_KEY,
+  baseURL: "https://api.groq.com/openai/v1",
 });
 
-const runtime = new CopilotRuntime();
+const agent = new BuiltInAgent({
+  model: groq("llama-3.3-70b-versatile"),
+});
+
+const serviceAdapter = new ExperimentalEmptyAdapter();
+
+const runtime = new CopilotRuntime({
+  agents: { default: agent },
+});
 
 export const POST = async (req: NextRequest) => {
   const { handleRequest } = copilotRuntimeNextJSAppRouterEndpoint({
