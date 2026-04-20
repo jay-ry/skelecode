@@ -107,7 +107,9 @@ export function BrainstormChat({
   });
 
   return (
+    <div className="flex flex-col flex-1 overflow-hidden min-h-0 h-full">
     <CopilotChat
+      className="h-full"
       instructions={`You are a project brainstorm interviewer for SkeleCode, an AI project planning tool.
 
 Your job: interview the user to extract their project idea, then generate a project.md spec.
@@ -126,5 +128,6 @@ Rules:
           "What kind of project do you want to build? (Or say 'I have no idea' and I'll suggest some options.)",
       }}
     />
+    </div>
   );
 }
