@@ -1,5 +1,6 @@
 from dotenv import load_dotenv
-load_dotenv()  # Must be before any LangChain imports that read GOOGLE_API_KEY
+from pathlib import Path
+load_dotenv(Path(__file__).parent.parent / ".env")  # Root .env shared with frontend
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
