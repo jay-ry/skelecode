@@ -1,5 +1,6 @@
 "use client";
-import { useCopilotAction, useCopilotChat } from "@copilotkit/react-core";
+import { useCopilotAction } from "@copilotkit/react-core";
+import { useAgent } from "@copilotkit/react-core/v2";
 import { CopilotChat } from "@copilotkit/react-ui";
 
 interface BrainstormChatProps {
@@ -13,7 +14,7 @@ export function BrainstormChat({
   onStreamingChange,
   onError,
 }: BrainstormChatProps) {
-  const { visibleMessages } = useCopilotChat();
+  const { agent } = useAgent();
 
   useCopilotAction({
     name: "generateProjectSpec",
@@ -32,21 +33,16 @@ export function BrainstormChat({
     ],
     handler: async ({ summary: _summary }) => {
       onStreamingChange(true);
-      onMarkdownUpdate(""); // Clear previous content
+      onMarkdownUpdate("");
       onError(false);
 
-      // Serialize conversation from CopilotKit's message store
-      // visibleMessages is Message[] from @copilotkit/runtime-client-gql
-      // Only TextMessage instances have role + content; filter others out
-      const conversation = visibleMessages
-        .filter((msg) => msg.isTextMessage())
-        .map((msg) => {
-          const textMsg = msg as { role: string; content: string };
-          return {
-            role: textMsg.role === "user" ? "user" : "assistant",
-            content: textMsg.content ?? "",
-          };
-        });
+      // Read messages from the AG-UI agent (CopilotKit 1.56+ architecture)
+      const conversation = (agent.messages ?? [])
+        .filter((msg) => msg.role === "user" || msg.role === "assistant")
+        .map((msg) => ({
+          role: msg.role as "user" | "assistant",
+          content: typeof msg.content === "string" ? msg.content : "",
+        }));
 
       try {
         const response = await fetch("/api/brainstorm", {
@@ -61,13 +57,15 @@ export function BrainstormChat({
 
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
+        let buffer = "";
 
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
 
-          const text = decoder.decode(value, { stream: true });
-          const lines = text.split("\n");
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() ?? "";
 
           for (const line of lines) {
             if (!line.startsWith("data: ")) continue;
@@ -84,14 +82,14 @@ export function BrainstormChat({
                 onMarkdownUpdate(event.data.project_md);
               }
             } catch {
-              // Partial JSON chunk — skip silently
+              // Partial JSON — skip
             }
           }
         }
       } catch (err) {
         onStreamingChange(false);
         onError(true);
-        throw err; // Re-throw so CopilotKit shows error in chat
+        throw err;
       }
     },
     render: ({ status }) => {
@@ -108,9 +106,9 @@ export function BrainstormChat({
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden min-h-0 h-full">
-    <CopilotChat
-      className="h-full"
-      instructions={`You are a project brainstorm interviewer for SkeleCode, an AI project planning tool.
+      <CopilotChat
+        className="h-full"
+        instructions={`You are a project brainstorm interviewer for SkeleCode, an AI project planning tool.
 
 Your job: interview the user to extract their project idea, then generate a project.md spec.
 
@@ -122,12 +120,12 @@ Rules:
 - After 4-5 exchanges where you have ALL of: core problem, target users, key features, tech preferences, and at least one constraint — call generateProjectSpec with a one-sentence summary.
 - Do NOT call generateProjectSpec until you have gathered all five pieces of information.
 - Do NOT repeat questions for information the user already provided.`}
-      labels={{
-        title: "Brainstorm Bot",
-        initial:
-          "What kind of project do you want to build? (Or say 'I have no idea' and I'll suggest some options.)",
-      }}
-    />
+        labels={{
+          title: "Brainstorm Bot",
+          initial:
+            "What kind of project do you want to build? (Or say 'I have no idea' and I'll suggest some options.)",
+        }}
+      />
     </div>
   );
 }
