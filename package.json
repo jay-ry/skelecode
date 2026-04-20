@@ -1,0 +1,14 @@
+{
+  "name": "skelecode",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently --kill-others-on-fail --prefix-colors \"bgBlue.bold,bgGreen.bold,bgYellow.bold\" --names \"frontend,server,db\" \"npm run dev:frontend\" \"npm run dev:backend\" \"npm run dev:db\"",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:backend": "cd backend && venv/bin/uvicorn main:app --reload",
+    "dev:db": "echo '[db] No database configured yet (coming in Phase 3)' && sleep infinity"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
