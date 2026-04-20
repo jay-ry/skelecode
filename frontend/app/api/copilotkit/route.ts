@@ -1,21 +1,16 @@
 import {
   CopilotRuntime,
-  ExperimentalEmptyAdapter,
+  GroqAdapter,
   copilotRuntimeNextJSAppRouterEndpoint,
 } from "@copilotkit/runtime";
-import { BuiltInAgent } from "@copilotkit/runtime/v2";
 import { NextRequest } from "next/server";
 
-const agent = new BuiltInAgent({
-  model: "groq:llama-3.3-70b-versatile",
+const serviceAdapter = new GroqAdapter({
+  model: "llama-3.3-70b-versatile",
   // Reads GROQ_API_KEY from process.env automatically
 });
 
-const serviceAdapter = new ExperimentalEmptyAdapter();
-
-const runtime = new CopilotRuntime({
-  agents: { default: agent },
-});
+const runtime = new CopilotRuntime();
 
 export const POST = async (req: NextRequest) => {
   const { handleRequest } = copilotRuntimeNextJSAppRouterEndpoint({
