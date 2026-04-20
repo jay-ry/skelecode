@@ -4,24 +4,28 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
-}
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  /* CopilotKit theme — SkeleCode brand */
+  --copilot-kit-primary-color: rgb(17, 17, 17);
+  --copilot-kit-contrast-color: rgb(255, 255, 255);
+  --copilot-kit-background-color: rgb(255, 255, 255);
+  --copilot-kit-input-background-color: rgb(248, 248, 248);
+  --copilot-kit-secondary-color: rgb(250, 250, 250);
+  --copilot-kit-secondary-contrast-color: rgb(17, 17, 17);
+  --copilot-kit-separator-color: rgb(229, 229, 229);
+  --copilot-kit-muted-color: rgb(163, 163, 163);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Ensure CopilotKit fills its container when used inline */
+.copilotKitChat {
+  height: 100% !important;
+  border-radius: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
 }
