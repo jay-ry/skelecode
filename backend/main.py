@@ -1,5 +1,5 @@
 from dotenv import load_dotenv
-load_dotenv()  # Must be before any LangChain imports that read ANTHROPIC_API_KEY
+load_dotenv()  # Must be before any LangChain imports that read GOOGLE_API_KEY
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
