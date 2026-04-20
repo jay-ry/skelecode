@@ -15,7 +15,7 @@ const groq = createOpenAI({
 });
 
 const agent = new BuiltInAgent({
-  model: groq("llama-3.3-70b-versatile"),
+  model: groq.chat("llama-3.3-70b-versatile"),
 });
 
 const serviceAdapter = new ExperimentalEmptyAdapter();
