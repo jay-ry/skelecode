@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Literal
 import logging
 
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_groq import ChatGroq
 from langchain_core.messages import SystemMessage, HumanMessage
 from langgraph.graph import StateGraph, START, END
 from pydantic import ValidationError
@@ -22,18 +22,18 @@ DRAFTER_PROMPT = (_PROMPTS_DIR / "drafter_system.txt").read_text()
 
 # Two separate model instances — extractor is deterministic, drafter is generative
 # AI-SPEC.md Section 4 — Model Configuration
-llm_extractor = ChatGoogleGenerativeAI(
-    model="gemini-2.0-flash",
+llm_extractor = ChatGroq(
+    model="llama-3.3-70b-versatile",
     temperature=0.0,
-    max_output_tokens=1024,
+    max_tokens=1024,
 )
-llm_drafter = ChatGoogleGenerativeAI(
-    model="gemini-2.0-flash",
+llm_drafter = ChatGroq(
+    model="llama-3.3-70b-versatile",
     temperature=0.7,
-    max_output_tokens=4096,
+    max_tokens=4096,
 )
 
-# with_structured_output uses Claude's tool-calling API for guaranteed Pydantic validation
+# with_structured_output uses Groq's tool-calling API for guaranteed Pydantic validation
 # AI-SPEC.md Section 4b — eliminates JSON parsing errors
 structured_extractor = llm_extractor.with_structured_output(ExtractedFields)
 
