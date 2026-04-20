@@ -1,15 +1,25 @@
 "use client";
 import { useState } from "react";
+import { BrainstormChat } from "../components/BrainstormChat";
+import { ProjectPreview } from "../components/ProjectPreview";
 
 export default function BrainstormPage() {
   const [markdown, setMarkdown] = useState<string>("");
   const [isStreaming, setIsStreaming] = useState<boolean>(false);
+  const [hasError, setHasError] = useState<boolean>(false);
 
   const handleStartOver = () => {
     setMarkdown("");
     setIsStreaming(false);
-    // CopilotKit conversation reset is handled by remounting BrainstormChat
-    // Plan 01-03 wires the actual reset mechanism
+    setHasError(false);
+    // Note: CopilotKit conversation persists until page reload — acceptable for Phase 1
+    // Phase 3 (auth + persistence) will implement proper session reset
+  };
+
+  const handleRetry = () => {
+    setHasError(false);
+    setMarkdown("");
+    // User retries by sending another message in the chat
   };
 
   return (
@@ -30,19 +40,22 @@ export default function BrainstormPage() {
       {/* Two-column layout: 40% chat / 60% preview — desktop only */}
       <div className="flex flex-1 overflow-hidden">
         {/* Left panel — chat (40%) */}
-        <div className="w-2/5 flex flex-col border-r border-gray-200">
-          {/* BrainstormChat component goes here in Plan 01-03 */}
-          <div className="flex-1 flex items-center justify-center text-gray-400 text-sm">
-            Chat panel — BrainstormChat loads here
-          </div>
+        <div className="w-2/5 flex flex-col border-r border-gray-200 overflow-hidden">
+          <BrainstormChat
+            onMarkdownUpdate={setMarkdown}
+            onStreamingChange={setIsStreaming}
+            onError={setHasError}
+          />
         </div>
 
         {/* Right panel — preview (60%) */}
-        <div className="w-3/5 flex flex-col">
-          {/* ProjectPreview component goes here in Plan 01-03 */}
-          <div className="flex-1 flex items-center justify-center text-gray-400 text-sm">
-            Preview panel — ProjectPreview loads here
-          </div>
+        <div className="w-3/5 flex flex-col overflow-hidden">
+          <ProjectPreview
+            markdown={markdown}
+            isStreaming={isStreaming}
+            hasError={hasError}
+            onRetry={handleRetry}
+          />
         </div>
       </div>
     </div>
