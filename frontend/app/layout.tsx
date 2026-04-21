@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ClerkProvider } from "@clerk/nextjs";
 import { CopilotKit } from "@copilotkit/react-core";
 import { ProjectContextProvider } from "../context/ProjectContext";
 import "./globals.css";
@@ -15,14 +16,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className="bg-white font-sans antialiased">
-        <CopilotKit runtimeUrl="/api/copilotkit">
-          <ProjectContextProvider>
-            {children}
-          </ProjectContextProvider>
-        </CopilotKit>
-      </body>
-    </html>
+    <ClerkProvider>
+      <html lang="en">
+        <body className="bg-[#020408] font-sans antialiased">
+          <CopilotKit runtimeUrl="/api/copilotkit">
+            <ProjectContextProvider>
+              {children}
+            </ProjectContextProvider>
+          </CopilotKit>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }
