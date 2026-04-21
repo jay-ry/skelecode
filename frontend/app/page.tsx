@@ -6,7 +6,7 @@ import { Header } from "../components/Header";
 import { useProjectContext } from "../context/ProjectContext";
 
 export default function BrainstormPage() {
-  const { projectMd, setProjectMd, setSprints } = useProjectContext();
+  const { projectMd, setProjectMd, setSprints, setProjectId } = useProjectContext();
 
   const [markdown, setMarkdown] = useState<string>(projectMd);
   const [isStreaming, setIsStreaming] = useState<boolean>(false);
@@ -47,6 +47,7 @@ export default function BrainstormPage() {
     setMarkdown("");
     setProjectMd("");
     setSprints([]);
+    setProjectId(null);
     setIsStreaming(false);
     setHasError(false);
   };
@@ -55,6 +56,7 @@ export default function BrainstormPage() {
     setHasError(false);
     setMarkdown("");
     setProjectMd("");
+    setProjectId(null);
   };
 
   const hasProject = projectMd.trim().length > 0;
@@ -80,6 +82,7 @@ export default function BrainstormPage() {
             onMarkdownUpdate={handleMarkdownUpdate}
             onStreamingChange={setIsStreaming}
             onError={setHasError}
+            onProjectSaved={setProjectId}
           />
         </div>
 

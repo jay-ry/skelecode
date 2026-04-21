@@ -7,12 +7,20 @@ interface BrainstormChatProps {
   onMarkdownUpdate: (markdown: string) => void;
   onStreamingChange: (isStreaming: boolean) => void;
   onError: (hasError: boolean) => void;
+  onProjectSaved?: (projectId: string) => void;
+}
+
+function extractProjectName(md: string): string {
+  const match = md.match(/^#\s+(.+)$/m);
+  if (match) return match[1].trim();
+  return `Project ${new Date().toLocaleDateString()}`;
 }
 
 export function BrainstormChat({
   onMarkdownUpdate,
   onStreamingChange,
   onError,
+  onProjectSaved,
 }: BrainstormChatProps) {
   const { agent } = useAgent();
 
@@ -35,6 +43,7 @@ export function BrainstormChat({
       onStreamingChange(true);
       onMarkdownUpdate("");
       onError(false);
+      let finalProjectMd = "";
 
       // Read messages from the AG-UI agent (CopilotKit 1.56+ architecture)
       const conversation = (agent.messages ?? [])
@@ -73,12 +82,36 @@ export function BrainstormChat({
 
             if (payload === "[DONE]") {
               onStreamingChange(false);
+
+              // Auto-save to DB (fire-and-forget; tolerate Clerk-disabled / DATABASE_URL-missing dev mode)
+              try {
+                const saveRes = await fetch("/api/projects", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    name: extractProjectName(finalProjectMd),
+                    project_md: finalProjectMd,
+                  }),
+                });
+                if (saveRes.ok) {
+                  const { project_id } = (await saveRes.json()) as { project_id: string };
+                  onProjectSaved?.(project_id);
+                } else if (saveRes.status === 401) {
+                  console.info("[BrainstormChat] Not signed in — skipping project save");
+                } else {
+                  console.warn("[BrainstormChat] Project save failed with status", saveRes.status);
+                }
+              } catch (e) {
+                console.warn("[BrainstormChat] Auto-save skipped — server unavailable", e);
+              }
+
               return "Spec generated successfully. Check the preview panel on the right.";
             }
 
             try {
               const event = JSON.parse(payload);
               if (event.node === "drafter" && event.data?.project_md) {
+                finalProjectMd = event.data.project_md;
                 onMarkdownUpdate(event.data.project_md);
               }
             } catch {
