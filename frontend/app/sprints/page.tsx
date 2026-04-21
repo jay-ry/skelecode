@@ -2,6 +2,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import JSZip from "jszip";
+import { Header } from "../../components/Header";
 import { useProjectContext, type Sprint } from "../../context/ProjectContext";
 import { SprintList } from "../../components/SprintList";
 
@@ -113,38 +114,23 @@ export default function SprintsPage() {
   const downloadDisabled = isGenerating || sprints.length === 0;
 
   return (
-    <div className="flex flex-col h-screen">
-      {/* Header — matches Phase 1 header exactly per UI-SPEC */}
-      <header className="flex items-center justify-between px-6 py-3 border-b border-gray-200 bg-white shrink-0">
-        <span className="font-mono text-sm font-semibold tracking-tight text-gray-800">
-          SkeleCode
-        </span>
-        <div className="flex items-center gap-2">
-          <Link
-            href="/"
-            className="text-sm px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 transition-colors"
-          >
-            ← Brainstorm
-          </Link>
-          <button
-            type="button"
-            onClick={handleDownloadAll}
-            disabled={downloadDisabled}
-            className="text-sm px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            Download all (.zip)
-          </button>
-        </div>
-      </header>
+    <div className="flex flex-col h-screen bg-[#020408]">
+      <Header
+        backHref="/"
+        backLabel="← Brainstorm"
+        onDownload={handleDownloadAll}
+        downloadDisabled={downloadDisabled}
+        downloadLabel="Download all (.zip)"
+      />
 
       {/* Content */}
       <div className="flex flex-1 flex-col overflow-y-auto px-6 py-4 min-h-0">
         {noProject ? (
-          <div className="flex flex-1 flex-col items-center justify-center gap-2 text-gray-400 text-sm">
-            <p className="font-semibold text-gray-600">No project loaded</p>
+          <div className="flex flex-1 flex-col items-center justify-center gap-2 text-[#7abfb8] text-sm">
+            <p className="font-semibold text-[#c8f0ea]">No project loaded</p>
             <p>
               Return to{" "}
-              <Link href="/" className="underline">
+              <Link href="/" className="underline text-[#00ffe0] hover:text-[#c8f0ea] transition-colors">
                 Brainstorm
               </Link>{" "}
               to generate a project spec first.
@@ -155,13 +141,13 @@ export default function SprintsPage() {
             {/* Generate Sprints CTA — hidden once generation has started */}
             {!isGenerating && sprints.length === 0 && (
               <div className="flex flex-col items-center justify-center gap-4 py-8">
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-[#7abfb8]">
                   Click Generate Sprints to break your project into Scrum sprints.
                 </p>
                 <button
                   type="button"
                   onClick={handleGenerate}
-                  className="text-sm px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 transition-colors"
+                  className="text-sm px-4 py-2 border border-[rgba(0,255,224,0.15)] rounded text-[#c8f0ea] hover:bg-[#050d14] hover:border-[#00ffe0] transition-colors"
                 >
                   Generate Sprints
                 </button>
@@ -170,13 +156,13 @@ export default function SprintsPage() {
 
             {errorMsg && (
               <div className="flex flex-col items-center gap-2 py-4">
-                <p className="text-sm text-red-600">
+                <p className="text-sm text-[#ff003c]">
                   Sprint generation failed. Check your connection and try again.
                 </p>
                 <button
                   type="button"
                   onClick={handleGenerate}
-                  className="text-sm px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 transition-colors"
+                  className="text-sm px-3 py-1 border border-[rgba(0,255,224,0.15)] rounded text-[#c8f0ea] hover:bg-[#050d14] hover:border-[#00ffe0] transition-colors"
                 >
                   Try again
                 </button>

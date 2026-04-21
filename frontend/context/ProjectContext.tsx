@@ -15,6 +15,8 @@ export interface ProjectContextValue {
   sprints: Sprint[];
   // React.Dispatch allows functional updater: setSprints((prev) => [...prev, sprint])
   setSprints: React.Dispatch<React.SetStateAction<Sprint[]>>;
+  projectId: string | null;
+  setProjectId: (id: string | null) => void;
 }
 
 const ProjectContext = createContext<ProjectContextValue | null>(null);
@@ -22,9 +24,10 @@ const ProjectContext = createContext<ProjectContextValue | null>(null);
 export function ProjectContextProvider({ children }: { children: React.ReactNode }) {
   const [projectMd, setProjectMd] = useState<string>("");
   const [sprints, setSprints] = useState<Sprint[]>([]);
+  const [projectId, setProjectId] = useState<string | null>(null);
 
   return (
-    <ProjectContext.Provider value={{ projectMd, setProjectMd, sprints, setSprints }}>
+    <ProjectContext.Provider value={{ projectMd, setProjectMd, sprints, setSprints, projectId, setProjectId }}>
       {children}
     </ProjectContext.Provider>
   );
