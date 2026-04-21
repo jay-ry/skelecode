@@ -1,8 +1,8 @@
 "use client";
-import { useState } from "react";
-import Link from "next/link";
+import { useState, useRef } from "react";
 import { BrainstormChat } from "../components/BrainstormChat";
 import { ProjectPreview } from "../components/ProjectPreview";
+import { Header } from "../components/Header";
 import { useProjectContext } from "../context/ProjectContext";
 
 export default function BrainstormPage() {
@@ -12,8 +12,32 @@ export default function BrainstormPage() {
   const [isStreaming, setIsStreaming] = useState<boolean>(false);
   const [hasError, setHasError] = useState<boolean>(false);
   const [previewOpen, setPreviewOpen] = useState<boolean>(true);
+  const [splitPercent, setSplitPercent] = useState<number>(40);
 
-  // Dual-write: update BOTH local state (for ProjectPreview) AND context (for /sprints)
+  const containerRef = useRef<HTMLDivElement>(null);
+  const isDragging = useRef(false);
+
+  const handleDividerMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    isDragging.current = true;
+
+    const onMouseMove = (ev: MouseEvent) => {
+      if (!isDragging.current || !containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const pct = ((ev.clientX - rect.left) / rect.width) * 100;
+      setSplitPercent(Math.min(Math.max(pct, 20), 80));
+    };
+
+    const onMouseUp = () => {
+      isDragging.current = false;
+      document.removeEventListener("mousemove", onMouseMove);
+      document.removeEventListener("mouseup", onMouseUp);
+    };
+
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", onMouseUp);
+  };
+
   const handleMarkdownUpdate = (md: string) => {
     setMarkdown(md);
     setProjectMd(md);
@@ -22,7 +46,7 @@ export default function BrainstormPage() {
   const handleStartOver = () => {
     setMarkdown("");
     setProjectMd("");
-    setSprints([]);          // clear any previously generated sprints
+    setSprints([]);
     setIsStreaming(false);
     setHasError(false);
   };
@@ -33,47 +57,24 @@ export default function BrainstormPage() {
     setProjectMd("");
   };
 
-  // Plan Sprints → nav appears only when we have a project to plan from (CONTEXT.md specifics)
   const hasProject = projectMd.trim().length > 0;
 
   return (
     <div className="flex flex-col h-screen">
-      {/* Header */}
-      <header className="flex items-center justify-between px-6 py-3 border-b border-gray-200 bg-white shrink-0">
-        <span className="font-mono text-sm font-semibold tracking-tight text-gray-800">
-          SkeleCode
-        </span>
-        <div className="flex items-center gap-2">
-          {hasProject && (
-            <Link
-              href="/sprints"
-              className="text-sm px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 transition-colors"
-            >
-              Plan Sprints →
-            </Link>
-          )}
-          <button
-            onClick={() => setPreviewOpen((v) => !v)}
-            className="text-sm px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 transition-colors"
-          >
-            {previewOpen ? "Hide preview" : "Show preview"}
-          </button>
-          <button
-            onClick={handleStartOver}
-            className="text-sm px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 transition-colors"
-          >
-            Start over
-          </button>
-        </div>
-      </header>
+      <Header
+        forwardHref={hasProject ? "/sprints" : undefined}
+        forwardLabel="Plan Sprints →"
+        onTogglePreview={() => setPreviewOpen((v) => !v)}
+        previewOpen={previewOpen}
+        onStartOver={handleStartOver}
+      />
 
       {/* Two-column layout */}
-      <div className="flex flex-1 overflow-hidden min-h-0">
+      <div ref={containerRef} className="flex flex-1 overflow-hidden min-h-0">
         {/* Left panel — chat */}
         <div
-          className={`flex flex-col border-r border-gray-200 overflow-hidden min-h-0 transition-all duration-200 ${
-            previewOpen ? "w-2/5" : "w-full"
-          }`}
+          className="flex flex-col overflow-hidden min-h-0"
+          style={{ width: previewOpen ? `${splitPercent}%` : "100%" }}
         >
           <BrainstormChat
             onMarkdownUpdate={handleMarkdownUpdate}
@@ -82,9 +83,20 @@ export default function BrainstormPage() {
           />
         </div>
 
-        {/* Right panel — preview */}
+        {/* Drag divider */}
         {previewOpen && (
-          <div className="w-3/5 flex flex-col overflow-hidden min-h-0">
+          <div
+            className="w-1 shrink-0 cursor-col-resize bg-[rgba(0,255,224,0.15)] hover:bg-[#00ffe0] transition-colors"
+            onMouseDown={handleDividerMouseDown}
+          />
+        )}
+
+        {/* Right panel — preview (glassmorphic) */}
+        {previewOpen && (
+          <div
+            className="flex flex-col overflow-hidden min-h-0 bg-[rgba(0,255,224,0.03)] backdrop-blur-md"
+            style={{ width: `${100 - splitPercent}%` }}
+          >
             <ProjectPreview
               markdown={markdown}
               isStreaming={isStreaming}

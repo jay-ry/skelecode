@@ -95,7 +95,7 @@ export function BrainstormChat({
     render: ({ status }) => {
       if (status === "inProgress") {
         return (
-          <div className="text-sm text-gray-500 mt-2 font-mono">
+          <div className="text-sm text-[#00ffe0] mt-2 font-mono animate-pulse">
             Generating your project spec...
           </div>
         );

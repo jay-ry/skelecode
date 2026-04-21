@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
 import { CopilotKit } from "@copilotkit/react-core";
 import { ProjectContextProvider } from "../context/ProjectContext";
-import "./globals.css";
 import "@copilotkit/react-ui/styles.css";
+import "./globals.css";
 
 export const metadata: Metadata = {
   title: "SkeleCode — AI Project Planner",

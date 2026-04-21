@@ -1,28 +1,48 @@
+@import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700&family=Rajdhani:wght@400;500;600&family=Share+Tech+Mono&display=swap");
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  --font-mono: "Share Tech Mono", monospace;
+  --font-sans: "Rajdhani", sans-serif;
+}
 
-  /* CopilotKit theme — SkeleCode brand */
-  --copilot-kit-primary-color: rgb(17, 17, 17);
-  --copilot-kit-contrast-color: rgb(255, 255, 255);
-  --copilot-kit-background-color: rgb(255, 255, 255);
-  --copilot-kit-input-background-color: rgb(248, 248, 248);
-  --copilot-kit-secondary-color: rgb(250, 250, 250);
-  --copilot-kit-secondary-contrast-color: rgb(17, 17, 17);
-  --copilot-kit-separator-color: rgb(229, 229, 229);
-  --copilot-kit-muted-color: rgb(163, 163, 163);
+:root {
+  --background: #020408;
+  --foreground: #c8f0ea;
+  --bg-secondary: #050d14;
+  --accent: #00ffe0;
+  --accent2: #ff003c;
+  --accent3: #7b00ff;
+  --border: rgba(0, 255, 224, 0.15);
+  --border-subtle: rgba(0, 255, 224, 0.08);
+  --text: #c8f0ea;
+  --text-muted: #7abfb8;
+  --glow: 0 0 20px rgba(0, 255, 224, 0.4);
+  --glow-red: 0 0 20px rgba(255, 0, 60, 0.4);
+
+  /* CopilotKit dark theme */
+  --copilot-kit-primary-color: #00ffe0;
+  --copilot-kit-contrast-color: #020408;
+  --copilot-kit-background-color: #020408;
+  --copilot-kit-input-background-color: #050d14;
+  --copilot-kit-secondary-color: #050d14;
+  --copilot-kit-secondary-contrast-color: #c8f0ea;
+  --copilot-kit-separator-color: rgba(0, 255, 224, 0.15);
+  --copilot-kit-muted-color: #7abfb8;
+  --copilot-kit-error-background: rgba(255, 0, 60, 0.1);
+  --copilot-kit-error-border: rgba(255, 0, 60, 0.4);
 }
 
 body {
-  background: var(--background);
+  background:
+    radial-gradient(ellipse at 15% 60%, rgba(0, 255, 224, 0.04) 0%, transparent 55%),
+    radial-gradient(ellipse at 85% 20%, rgba(123, 0, 255, 0.05) 0%, transparent 50%),
+    #020408;
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), sans-serif;
 }
 
-/* Ensure CopilotKit fills its container when used inline */
 .copilotKitChat {
   height: 100% !important;
   border-radius: 0 !important;
