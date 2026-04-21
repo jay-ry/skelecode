@@ -92,7 +92,7 @@ export default function SprintsPage() {
 
   const handleDownloadAll = async () => {
     // Guard — should not trigger while disabled, but defensive anyway (D-04)
-    if (!isDone || sprints.length === 0) return;
+    if (isGenerating || sprints.length === 0) return;
 
     const zip = new JSZip();
     for (const sprint of sprints) {
@@ -110,7 +110,7 @@ export default function SprintsPage() {
     URL.revokeObjectURL(url);
   };
 
-  const downloadDisabled = !isDone || sprints.length === 0;
+  const downloadDisabled = isGenerating || sprints.length === 0;
 
   return (
     <div className="flex flex-col h-screen">
