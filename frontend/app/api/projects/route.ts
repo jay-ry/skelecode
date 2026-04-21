@@ -34,8 +34,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  if (!body.name || typeof body.name !== "string") {
+  if (!body.name || typeof body.name !== "string" || body.name.trim().length === 0) {
     return NextResponse.json({ error: "Missing required field: name" }, { status: 400 });
+  }
+  if (body.name.length > 500) {
+    return NextResponse.json({ error: "Field 'name' must be 500 characters or fewer" }, { status: 400 });
   }
 
   const [row] = await db
