@@ -24,7 +24,7 @@ function formatSprintMarkdown(sprint: Sprint): string {
 }
 
 export default function SprintsPage() {
-  const { projectMd, sprints, setSprints } = useProjectContext();
+  const { projectMd, sprints, setSprints, projectId } = useProjectContext();
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [isDone, setIsDone] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -70,6 +70,35 @@ export default function SprintsPage() {
           if (payload === "[DONE]") {
             setIsGenerating(false);
             setIsDone(true);
+
+            // Snapshot sprints at [DONE] using the functional updater, then auto-save.
+            // This avoids stale-closure bugs where `sprints` from the outer scope is empty.
+            setSprints((latest) => {
+              if (projectId && latest.length > 0) {
+                fetch(`/api/projects/${projectId}/sprints`, {
+                  method: "PUT",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ sprints: latest }),
+                })
+                  .then((res) => {
+                    if (!res.ok) {
+                      console.warn(
+                        "[SprintsPage] Sprint save failed with status",
+                        res.status,
+                      );
+                    }
+                  })
+                  .catch((e) => {
+                    console.warn("[SprintsPage] Sprint auto-save skipped", e);
+                  });
+              } else if (!projectId) {
+                console.info(
+                  "[SprintsPage] No projectId in context — skipping sprint save (brainstorm may have been run without DB)",
+                );
+              }
+              return latest; // no-op updater; returning `latest` keeps state identical
+            });
+
             return;
           }
 
