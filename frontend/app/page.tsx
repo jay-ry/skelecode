@@ -1,16 +1,28 @@
 "use client";
 import { useState } from "react";
+import Link from "next/link";
 import { BrainstormChat } from "../components/BrainstormChat";
 import { ProjectPreview } from "../components/ProjectPreview";
+import { useProjectContext } from "../context/ProjectContext";
 
 export default function BrainstormPage() {
-  const [markdown, setMarkdown] = useState<string>("");
+  const { projectMd, setProjectMd, setSprints } = useProjectContext();
+
+  const [markdown, setMarkdown] = useState<string>(projectMd);
   const [isStreaming, setIsStreaming] = useState<boolean>(false);
   const [hasError, setHasError] = useState<boolean>(false);
   const [previewOpen, setPreviewOpen] = useState<boolean>(true);
 
+  // Dual-write: update BOTH local state (for ProjectPreview) AND context (for /sprints)
+  const handleMarkdownUpdate = (md: string) => {
+    setMarkdown(md);
+    setProjectMd(md);
+  };
+
   const handleStartOver = () => {
     setMarkdown("");
+    setProjectMd("");
+    setSprints([]);          // clear any previously generated sprints
     setIsStreaming(false);
     setHasError(false);
   };
@@ -18,7 +30,11 @@ export default function BrainstormPage() {
   const handleRetry = () => {
     setHasError(false);
     setMarkdown("");
+    setProjectMd("");
   };
+
+  // Plan Sprints → nav appears only when we have a project to plan from (CONTEXT.md specifics)
+  const hasProject = projectMd.trim().length > 0;
 
   return (
     <div className="flex flex-col h-screen">
@@ -28,6 +44,14 @@ export default function BrainstormPage() {
           SkeleCode
         </span>
         <div className="flex items-center gap-2">
+          {hasProject && (
+            <Link
+              href="/sprints"
+              className="text-sm px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 transition-colors"
+            >
+              Plan Sprints →
+            </Link>
+          )}
           <button
             onClick={() => setPreviewOpen((v) => !v)}
             className="text-sm px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 transition-colors"
@@ -52,7 +76,7 @@ export default function BrainstormPage() {
           }`}
         >
           <BrainstormChat
-            onMarkdownUpdate={setMarkdown}
+            onMarkdownUpdate={handleMarkdownUpdate}
             onStreamingChange={setIsStreaming}
             onError={setHasError}
           />
