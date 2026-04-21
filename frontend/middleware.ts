@@ -4,6 +4,7 @@ const isProtectedRoute = createRouteMatcher([
   "/dashboard(.*)",
   "/sprints(.*)",
   "/skeleton(.*)",
+  "/",          // brainstorm page requires sign-in
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
