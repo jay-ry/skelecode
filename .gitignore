@@ -1,2 +1,10 @@
 .env
 node_modules/
+
+# AI assistant / IDE planning files
+CLAUDE.md
+AGENTS.md
+.claude/
+.cursor/
+.planning/
+plan/
