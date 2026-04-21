@@ -1,6 +1,7 @@
 "use client";
 import Image from "next/image";
 import Link from "next/link";
+import { UserButton, useUser } from "@clerk/nextjs";
 
 interface HeaderProps {
   backHref?: string;
@@ -30,6 +31,7 @@ export function Header({
   downloadDisabled,
   downloadLabel = "Download",
 }: HeaderProps) {
+  const { isSignedIn } = useUser();
   return (
     <header className="flex items-center justify-between px-5 py-2.5 border-b border-[rgba(0,255,224,0.15)] shrink-0">
       {/* Logo */}
@@ -81,6 +83,18 @@ export function Header({
           >
             {downloadLabel}
           </button>
+        )}
+        {isSignedIn ? (
+          <>
+            <Link href="/dashboard" className={btnClass}>
+              Dashboard
+            </Link>
+            <UserButton />
+          </>
+        ) : (
+          <Link href="/sign-in" className={btnClass}>
+            Sign in
+          </Link>
         )}
       </div>
     </header>
