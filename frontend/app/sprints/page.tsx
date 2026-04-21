@@ -1,8 +1,26 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import JSZip from "jszip";
 import { useProjectContext, type Sprint } from "../../context/ProjectContext";
 import { SprintList } from "../../components/SprintList";
+
+function formatSprintMarkdown(sprint: Sprint): string {
+  const lines: string[] = [
+    `# Sprint ${sprint.number}: ${sprint.goal}`,
+    "",
+    "## User Stories",
+    ...sprint.user_stories.map((s) => `- ${s}`),
+    "",
+    "## Technical Tasks",
+    ...sprint.technical_tasks.map((t) => `- ${t}`),
+    "",
+    "## Definition of Done",
+    ...sprint.definition_of_done.map((d) => `- ${d}`),
+    "",
+  ];
+  return lines.join("\n");
+}
 
 export default function SprintsPage() {
   const { projectMd, sprints, setSprints } = useProjectContext();
@@ -72,9 +90,24 @@ export default function SprintsPage() {
     }
   };
 
-  // Plan 02-03 will replace this stub with a real JSZip handler.
-  const handleDownloadAll = () => {
-    // TODO (02-03): build zip from sprints and trigger download
+  const handleDownloadAll = async () => {
+    // Guard — should not trigger while disabled, but defensive anyway (D-04)
+    if (!isDone || sprints.length === 0) return;
+
+    const zip = new JSZip();
+    for (const sprint of sprints) {
+      zip.file(`sprint-${sprint.number}.md`, formatSprintMarkdown(sprint));
+    }
+
+    const blob = await zip.generateAsync({ type: "blob" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "sprints.zip"; // CONTEXT.md specifics: sprints.zip
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   const downloadDisabled = !isDone || sprints.length === 0;
