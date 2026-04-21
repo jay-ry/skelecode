@@ -11,7 +11,9 @@ export const projects = pgTable("projects", {
 
 export const sprints = pgTable("sprints", {
   id: uuid("id").primaryKey().defaultRandom(),
-  projectId: uuid("project_id").references(() => projects.id, { onDelete: "cascade" }),
+  projectId: uuid("project_id")
+    .notNull()
+    .references(() => projects.id, { onDelete: "cascade" }),
   sprintNumber: integer("sprint_number").notNull(),
   goal: text("goal"),
   contentMd: text("content_md"),
