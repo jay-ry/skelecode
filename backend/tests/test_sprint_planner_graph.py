@@ -30,7 +30,7 @@ class TestPlannerNode:
 
     @pytest.mark.asyncio
     async def test_planner_node_returns_sprints_list(self):
-        from agents.sprint_planner import planner_node, structured_planner
+        from agents.sprint_planner import planner_node
 
         fake_plan = SprintPlan(sprints=[
             Sprint(
@@ -42,7 +42,11 @@ class TestPlannerNode:
             )
         ])
 
-        with patch.object(structured_planner, "ainvoke", new=AsyncMock(return_value=fake_plan)):
+        # Patch the module-level structured_planner via its module reference.
+        # RunnableSequence inherits from Pydantic BaseModel — patch.object's __exit__
+        # calls delattr which Pydantic forbids. Module-level patch avoids that.
+        with patch("agents.sprint_planner.structured_planner") as mock_planner:
+            mock_planner.ainvoke = AsyncMock(return_value=fake_plan)
             state: SprintState = {"project_md": "# Vision\ntest", "sprints": [], "status": "planning"}
             result = await planner_node(state)
 
