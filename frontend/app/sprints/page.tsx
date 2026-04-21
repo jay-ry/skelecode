@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Link from "next/link";
 import JSZip from "jszip";
 import { Header } from "../../components/Header";
@@ -28,6 +28,10 @@ export default function SprintsPage() {
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [isDone, setIsDone] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  // Ref-backed accumulator so the [DONE] handler can read the full sprint list
+  // without relying on state (which would be stale in the closure) or performing
+  // side-effectful fetches inside a state updater function.
+  const accumulatedSprintsRef = useRef<Sprint[]>([]);
 
   // Pitfall 3 guard: direct /sprints URL access without first brainstorming
   const noProject = projectMd.trim().length === 0;
@@ -36,6 +40,7 @@ export default function SprintsPage() {
     if (noProject || isGenerating) return;
 
     setSprints([]);
+    accumulatedSprintsRef.current = [];
     setIsDone(false);
     setErrorMsg(null);
     setIsGenerating(true);
@@ -71,33 +76,29 @@ export default function SprintsPage() {
             setIsGenerating(false);
             setIsDone(true);
 
-            // Snapshot sprints at [DONE] using the functional updater, then auto-save.
-            // This avoids stale-closure bugs where `sprints` from the outer scope is empty.
-            setSprints((latest) => {
-              if (projectId && latest.length > 0) {
-                fetch(`/api/projects/${projectId}/sprints`, {
-                  method: "PUT",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ sprints: latest }),
+            // Read from the ref (not state) to avoid stale-closure issues.
+            // The fetch runs outside the state setter — state updaters must be pure.
+            const accumulatedSprints = accumulatedSprintsRef.current;
+            setSprints(accumulatedSprints);
+
+            if (projectId && accumulatedSprints.length > 0) {
+              fetch(`/api/projects/${projectId}/sprints`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ sprints: accumulatedSprints }),
+              })
+                .then((res) => {
+                  if (!res.ok) {
+                    console.warn(
+                      "[SprintsPage] Sprint save failed with status",
+                      res.status,
+                    );
+                  }
                 })
-                  .then((res) => {
-                    if (!res.ok) {
-                      console.warn(
-                        "[SprintsPage] Sprint save failed with status",
-                        res.status,
-                      );
-                    }
-                  })
-                  .catch((e) => {
-                    console.warn("[SprintsPage] Sprint auto-save skipped", e);
-                  });
-              } else if (!projectId) {
-                console.info(
-                  "[SprintsPage] No projectId in context — skipping sprint save (brainstorm may have been run without DB)",
-                );
-              }
-              return latest; // no-op updater; returning `latest` keeps state identical
-            });
+                .catch((e) => {
+                  console.warn("[SprintsPage] Sprint auto-save skipped", e);
+                });
+            }
 
             return;
           }
@@ -105,7 +106,8 @@ export default function SprintsPage() {
           try {
             const event = JSON.parse(payload);
             if (event.node === "sprint" && event.data) {
-              setSprints((prev: Sprint[]) => [...prev, event.data as Sprint]);
+              accumulatedSprintsRef.current = [...accumulatedSprintsRef.current, event.data as Sprint];
+              setSprints(accumulatedSprintsRef.current);
             } else if (event.node === "error") {
               setErrorMsg(event.data?.reason ?? "Unknown backend error");
             }
