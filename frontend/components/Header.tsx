@@ -4,6 +4,7 @@ import Link from "next/link";
 import { UserButton, useUser } from "@clerk/nextjs";
 
 interface HeaderProps {
+  projectId?: string;
   backHref?: string;
   backLabel?: string;
   forwardHref?: string;
@@ -20,6 +21,7 @@ const btnClass =
   "text-sm px-3 py-1 border border-[rgba(0,255,224,0.15)] rounded text-[#c8f0ea] hover:bg-[#050d14] hover:border-[#00ffe0] transition-colors";
 
 export function Header({
+  projectId: _projectId,
   backHref,
   backLabel,
   forwardHref,
@@ -32,9 +34,10 @@ export function Header({
   downloadLabel = "Download",
 }: HeaderProps) {
   const { isSignedIn } = useUser();
+
   return (
     <header className="flex items-center justify-between px-5 py-2.5 border-b border-[rgba(0,255,224,0.15)] shrink-0">
-      {/* Logo */}
+      {/* Logo → Dashboard */}
       <Link href="/" className="flex items-center gap-2.5 group">
         <Image
           src="/skelecode-logo.png"
@@ -84,9 +87,10 @@ export function Header({
             {downloadLabel}
           </button>
         )}
+
         {isSignedIn ? (
           <>
-            <Link href="/dashboard" className={btnClass}>
+            <Link href="/" className={btnClass}>
               Dashboard
             </Link>
             <UserButton />
