@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from langchain_groq import ChatGroq
 from langchain_core.messages import SystemMessage, HumanMessage
 import logging
+import re
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -26,8 +27,7 @@ class NameResponse(BaseModel):
 
 
 def _fallback_name(project_md: str) -> str:
-    import re
-    match = re.search(r"^#\s+(.+)$", project_md, re.MULTILINE)
+    match = re.search(r"^#[ \t]+([^\n]+)$", project_md, re.MULTILINE)
     if match:
         candidate = match.group(1).strip()
         if candidate.lower() not in ("vision", "overview", "project", ""):
@@ -48,7 +48,7 @@ async def generate_name(req: NameRequest) -> NameResponse:
             SystemMessage(content=_SYSTEM),
             HumanMessage(content=md),
         ])
-        name = str(response.content).strip().strip('"').strip("'")
+        name = str(response.content).strip().strip('"').strip("'").strip("`")
         if name:
             return NameResponse(name=name)
     except Exception as e:
