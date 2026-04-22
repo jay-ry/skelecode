@@ -53,10 +53,11 @@ export default function SkeletonPage() {
   // --- Page mount: restore saved skeleton if one exists for this project ---
   useEffect(() => {
     if (!projectId) return;
-    setIsLoadingSaved(true);
-    fetch(`/api/projects/${projectId}/skeleton`)
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
+    const loadSaved = async () => {
+      setIsLoadingSaved(true);
+      try {
+        const res = await fetch(`/api/projects/${projectId}/skeleton`);
+        const data = res.ok ? await res.json() : null;
         if (data?.folder_tree) {
           setFolderTree(data.folder_tree);
           folderTreeRef.current = data.folder_tree;
@@ -68,11 +69,13 @@ export default function SkeletonPage() {
         if (data?.folder_tree || data?.wireframe_html) {
           setIsDone(true);
         }
-      })
-      .catch(() => {
+      } catch {
         // Silent — unsaved project is a valid state
-      })
-      .finally(() => setIsLoadingSaved(false));
+      } finally {
+        setIsLoadingSaved(false);
+      }
+    };
+    loadSaved();
   }, [projectId]);
 
   // --- Generate handler ---
