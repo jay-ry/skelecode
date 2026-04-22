@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from api.brainstorm import router as brainstorm_router
 from api.sprint_planner import router as sprint_planner_router
 from api.skeleton import router as skeleton_router
+from api.name import router as name_router
 
 app = FastAPI(title="SkeleCode API")
 
@@ -20,6 +21,7 @@ app.add_middleware(
 app.include_router(brainstorm_router)
 app.include_router(sprint_planner_router)
 app.include_router(skeleton_router)
+app.include_router(name_router)
 
 
 @app.get("/health")
