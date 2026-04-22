@@ -1,114 +1,116 @@
 "use client";
-import { useState, useRef } from "react";
-import { BrainstormChat } from "../components/BrainstormChat";
-import { ProjectPreview } from "../components/ProjectPreview";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Header } from "../components/Header";
-import { useProjectContext } from "../context/ProjectContext";
 
-export default function BrainstormPage() {
-  const { projectMd, setProjectMd, setSprints, setProjectId } = useProjectContext();
+interface ProjectRow {
+  id: string;
+  name: string;
+  createdAt: string;
+  projectMd: string | null;
+}
 
-  const [markdown, setMarkdown] = useState<string>(projectMd);
-  const [isStreaming, setIsStreaming] = useState<boolean>(false);
-  const [hasError, setHasError] = useState<boolean>(false);
-  const [previewOpen, setPreviewOpen] = useState<boolean>(true);
-  const [splitPercent, setSplitPercent] = useState<number>(40);
+export default function DashboardPage() {
+  const router = useRouter();
 
-  const containerRef = useRef<HTMLDivElement>(null);
-  const isDragging = useRef(false);
+  const [projects, setProjects] = useState<ProjectRow[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [openingId, setOpeningId] = useState<string | null>(null);
 
-  const handleDividerMouseDown = (e: React.MouseEvent) => {
-    e.preventDefault();
-    isDragging.current = true;
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/projects")
+      .then((res) => {
+        if (!res.ok) throw new Error(`Failed to load projects (${res.status})`);
+        return res.json() as Promise<ProjectRow[]>;
+      })
+      .then((rows) => {
+        if (!cancelled) setProjects(rows);
+      })
+      .catch((e) => {
+        if (!cancelled) setError(e instanceof Error ? e.message : String(e));
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, []);
 
-    const onMouseMove = (ev: MouseEvent) => {
-      if (!isDragging.current || !containerRef.current) return;
-      const rect = containerRef.current.getBoundingClientRect();
-      const pct = ((ev.clientX - rect.left) / rect.width) * 100;
-      setSplitPercent(Math.min(Math.max(pct, 20), 80));
-    };
-
-    const onMouseUp = () => {
-      isDragging.current = false;
-      document.removeEventListener("mousemove", onMouseMove);
-      document.removeEventListener("mouseup", onMouseUp);
-    };
-
-    document.addEventListener("mousemove", onMouseMove);
-    document.addEventListener("mouseup", onMouseUp);
+  const handleOpen = (projectId: string) => {
+    setOpeningId(projectId);
+    router.push(`/chat/${projectId}`);
   };
 
-  const handleMarkdownUpdate = (md: string) => {
-    setMarkdown(md);
-    setProjectMd(md);
+  const handleNewProject = () => {
+    router.push("/chat");
   };
-
-  const handleStartOver = () => {
-    setMarkdown("");
-    setProjectMd("");
-    setSprints([]);
-    setProjectId(null);
-    setIsStreaming(false);
-    setHasError(false);
-  };
-
-  const handleRetry = () => {
-    setHasError(false);
-    setMarkdown("");
-    setProjectMd("");
-    setProjectId(null);
-  };
-
-  const hasProject = projectMd.trim().length > 0;
 
   return (
-    <div className="flex flex-col h-screen">
-      <Header
-        forwardHref={hasProject ? "/sprints" : undefined}
-        forwardLabel="Plan Sprints →"
-        onTogglePreview={() => setPreviewOpen((v) => !v)}
-        previewOpen={previewOpen}
-        onStartOver={handleStartOver}
-      />
+    <div className="flex flex-col min-h-screen bg-[#020408]">
+      <Header />
 
-      {/* Two-column layout */}
-      <div ref={containerRef} className="flex flex-1 overflow-hidden min-h-0">
-        {/* Left panel — chat */}
-        <div
-          className="flex flex-col overflow-hidden min-h-0"
-          style={{ width: previewOpen ? `${splitPercent}%` : "100%" }}
-        >
-          <BrainstormChat
-            onMarkdownUpdate={handleMarkdownUpdate}
-            onStreamingChange={setIsStreaming}
-            onError={setHasError}
-            onProjectSaved={setProjectId}
-          />
+      <main className="flex-1 px-6 py-8 max-w-4xl mx-auto w-full">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-mono text-[#00ffe0]">Your Projects</h1>
+          <button
+            type="button"
+            onClick={handleNewProject}
+            className="text-sm px-3 py-1 border border-[rgba(0,255,224,0.15)] rounded text-[#c8f0ea] hover:bg-[#050d14] hover:border-[#00ffe0] transition-colors"
+          >
+            + New Project
+          </button>
         </div>
 
-        {/* Drag divider */}
-        {previewOpen && (
-          <div
-            className="w-1 shrink-0 cursor-col-resize bg-[rgba(0,255,224,0.15)] hover:bg-[#00ffe0] transition-colors"
-            onMouseDown={handleDividerMouseDown}
-          />
+        {loading && (
+          <p className="text-sm text-[#7abfb8]">Loading projects...</p>
         )}
 
-        {/* Right panel — preview (glassmorphic) */}
-        {previewOpen && (
-          <div
-            className="flex flex-col overflow-hidden min-h-0 bg-[rgba(0,255,224,0.03)] backdrop-blur-md"
-            style={{ width: `${100 - splitPercent}%` }}
-          >
-            <ProjectPreview
-              markdown={markdown}
-              isStreaming={isStreaming}
-              hasError={hasError}
-              onRetry={handleRetry}
-            />
+        {error && !loading && (
+          <p className="text-sm text-[#ff003c]">{error}</p>
+        )}
+
+        {!loading && !error && projects.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-16 gap-3">
+            <p className="text-sm text-[#7abfb8]">
+              No projects yet — start a brainstorm to create your first one.
+            </p>
+            <button
+              type="button"
+              onClick={handleNewProject}
+              className="text-sm px-4 py-2 border border-[rgba(0,255,224,0.15)] rounded text-[#c8f0ea] hover:bg-[#050d14] hover:border-[#00ffe0] transition-colors"
+            >
+              Start brainstorming
+            </button>
           </div>
         )}
-      </div>
+
+        {!loading && !error && projects.length > 0 && (
+          <ul className="flex flex-col gap-2">
+            {projects.map((project) => (
+              <li
+                key={project.id}
+                className="flex items-center justify-between border border-[rgba(0,255,224,0.15)] rounded px-4 py-3 hover:border-[#00ffe0] transition-colors"
+              >
+                <div className="flex flex-col">
+                  <span className="text-sm text-[#c8f0ea] font-semibold">{project.name}</span>
+                  <span className="text-xs text-[#7abfb8]">
+                    {new Date(project.createdAt).toLocaleDateString()}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleOpen(project.id)}
+                  disabled={openingId === project.id}
+                  className="text-sm px-3 py-1 border border-[rgba(0,255,224,0.15)] rounded text-[#c8f0ea] hover:bg-[#050d14] hover:border-[#00ffe0] transition-colors disabled:opacity-40"
+                >
+                  {openingId === project.id ? "Opening..." : "Open"}
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </main>
     </div>
   );
 }
