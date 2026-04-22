@@ -1,6 +1,6 @@
 "use client";
 import { SprintCard } from "./SprintCard";
-import type { Sprint } from "../context/ProjectContext";
+import type { Sprint } from "../types/sprint";
 
 interface SprintListProps {
   sprints: Sprint[];

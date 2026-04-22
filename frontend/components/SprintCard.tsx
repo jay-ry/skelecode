@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import type { Sprint } from "../context/ProjectContext";
+import type { Sprint } from "../types/sprint";
 
 interface SprintCardProps {
   sprint: Sprint;

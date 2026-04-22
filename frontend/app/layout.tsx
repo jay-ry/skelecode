@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
 import { CopilotKit } from "@copilotkit/react-core";
-import { ProjectContextProvider } from "../context/ProjectContext";
 import "@copilotkit/react-ui/styles.css";
 import "./globals.css";
 
@@ -20,9 +19,7 @@ export default function RootLayout({
       <html lang="en">
         <body className="bg-[#020408] font-sans antialiased">
           <CopilotKit runtimeUrl="/api/copilotkit">
-            <ProjectContextProvider>
-              {children}
-            </ProjectContextProvider>
+            {children}
           </CopilotKit>
         </body>
       </html>
