@@ -20,3 +20,13 @@ export const sprints = pgTable("sprints", {
   sprintData: jsonb("sprint_data"),
   createdAt: timestamp("created_at").defaultNow(),
 });
+
+export const skeletons = pgTable("skeletons", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  projectId: uuid("project_id")
+    .notNull()
+    .references(() => projects.id, { onDelete: "cascade" }),
+  folderTree: text("folder_tree"),
+  wireframeHtml: text("wireframe_html"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
