@@ -183,7 +183,7 @@ export default function SprintsPage() {
   if (isLoading) {
     return (
       <div className="flex flex-col h-screen bg-[#020408]">
-        <Header projectId={projectId} backHref={`/chat/${projectId}`} backLabel="← Brainstorm" />
+        <Header projectId={projectId} />
         <div className="flex flex-1 items-center justify-center">
           <p className="text-sm text-[#7abfb8]">Loading project...</p>
         </div>
@@ -195,10 +195,6 @@ export default function SprintsPage() {
     <div className="flex flex-col h-screen bg-[#020408]">
       <Header
         projectId={projectId}
-        backHref={`/chat/${projectId}`}
-        backLabel="← Brainstorm"
-        forwardHref={isDone ? `/skeleton/${projectId}` : undefined}
-        forwardLabel="Generate Skeleton →"
         onDownload={handleDownloadAll}
         downloadDisabled={isGenerating || sprints.length === 0}
         downloadLabel="Download all (.zip)"

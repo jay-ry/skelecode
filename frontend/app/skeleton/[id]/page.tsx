@@ -60,12 +60,13 @@ export default function SkeletonPage() {
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [isDone, setIsDone] = useState<boolean>(false);
   const [folderTree, setFolderTree] = useState<string>("");
-  const [wireframeHtml, setWireframeHtml] = useState<string>("");
+  // keyed by sprint number (1-based)
+  const [wireframeHtmls, setWireframeHtmls] = useState<Record<number, string>>({});
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saved" | "failed">("idle");
 
   const folderTreeRef = useRef<string>("");
-  const wireframeHtmlRef = useRef<string>("");
+  const wireframeHtmlsRef = useRef<Record<number, string>>({});
 
   // Load project and saved skeleton on mount
   useEffect(() => {
@@ -88,8 +89,21 @@ export default function SkeletonPage() {
             folderTreeRef.current = saved.folder_tree;
           }
           if (saved.wireframe_html) {
-            setWireframeHtml(saved.wireframe_html);
-            wireframeHtmlRef.current = saved.wireframe_html;
+            // New format: JSON-encoded Record<number, string>
+            // Legacy format: raw HTML string
+            let htmls: Record<number, string> = {};
+            try {
+              const parsed = JSON.parse(saved.wireframe_html);
+              if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+                htmls = parsed as Record<number, string>;
+              } else {
+                htmls = { 1: saved.wireframe_html };
+              }
+            } catch {
+              htmls = { 1: saved.wireframe_html };
+            }
+            setWireframeHtmls(htmls);
+            wireframeHtmlsRef.current = htmls;
           }
           if (saved.folder_tree || saved.wireframe_html) setIsDone(true);
         }
@@ -109,9 +123,9 @@ export default function SkeletonPage() {
     setErrorMsg(null);
     setSaveStatus("idle");
     setFolderTree("");
-    setWireframeHtml("");
+    setWireframeHtmls({});
     folderTreeRef.current = "";
-    wireframeHtmlRef.current = "";
+    wireframeHtmlsRef.current = {};
 
     const sprintsPayload = sprints.length > 0 ? sprints : [STUB_SPRINT];
 
@@ -152,7 +166,7 @@ export default function SkeletonPage() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                   folder_tree: folderTreeRef.current,
-                  wireframe_html: wireframeHtmlRef.current,
+                  wireframe_html: JSON.stringify(wireframeHtmlsRef.current),
                 }),
               });
               setSaveStatus(saveRes.ok ? "saved" : "failed");
@@ -171,8 +185,9 @@ export default function SkeletonPage() {
               folderTreeRef.current = next;
               setFolderTree(next);
             } else if (event.type === "wireframe") {
-              wireframeHtmlRef.current = event.html;
-              setWireframeHtml(event.html);
+              const sprintNum = event.sprint_number as number ?? 1;
+              wireframeHtmlsRef.current = { ...wireframeHtmlsRef.current, [sprintNum]: event.html };
+              setWireframeHtmls((prev) => ({ ...prev, [sprintNum]: event.html }));
             } else if (event.type === "error") {
               setErrorMsg(event.reason ?? "Unknown backend error");
             }
@@ -188,10 +203,12 @@ export default function SkeletonPage() {
   };
 
   const handleDownload = async () => {
-    if (isGenerating || !isDone || !folderTree || !wireframeHtml) return;
+    if (isGenerating || !isDone || !folderTree || Object.keys(wireframeHtmls).length === 0) return;
     const zip = new JSZip();
     zip.file("structure.txt", folderTree);
-    zip.file("wireframe.html", wireframeHtml);
+    for (const [num, html] of Object.entries(wireframeHtmls)) {
+      zip.file(`wireframe-sprint-${num}.html`, html);
+    }
     const blob = await zip.generateAsync({ type: "blob" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -204,12 +221,13 @@ export default function SkeletonPage() {
   };
 
   const noSprints = !isLoading && sprints.length === 0;
+  const hasWireframes = Object.keys(wireframeHtmls).length > 0;
   const ctaLabel = isGenerating ? "Generating..." : isDone ? "Regenerate" : "Generate Skeleton";
 
   if (isLoading) {
     return (
       <div className="flex flex-col h-screen bg-[#020408]">
-        <Header projectId={projectId} backHref={`/sprints/${projectId}`} backLabel="← Sprints" />
+        <Header projectId={projectId} />
         <div className="flex flex-1 items-center justify-center">
           <p className="text-sm text-[#7abfb8]">Loading project...</p>
         </div>
@@ -221,10 +239,8 @@ export default function SkeletonPage() {
     <div className="flex flex-col h-screen bg-[#020408]">
       <Header
         projectId={projectId}
-        backHref={`/sprints/${projectId}`}
-        backLabel="← Sprints"
         onDownload={handleDownload}
-        downloadDisabled={isGenerating || !isDone || !folderTree || !wireframeHtml}
+        downloadDisabled={isGenerating || !isDone || !folderTree || !hasWireframes}
         downloadLabel="Download skeleton.zip"
       />
 
@@ -241,7 +257,12 @@ export default function SkeletonPage() {
           <div className="flex items-center justify-center gap-4 py-6">
             {!isDone && !isGenerating && (
               <p className="text-sm text-[#7abfb8]">
-                Click Generate Skeleton to build your folder structure and Sprint 1 wireframe.
+                Click Generate Skeleton to build your folder structure and wireframes for all sprints.
+              </p>
+            )}
+            {isGenerating && hasWireframes && (
+              <p className="text-sm text-[#7abfb8]">
+                Generating wireframes… {Object.keys(wireframeHtmls).length} of {sprints.length || 1} done
               </p>
             )}
             <button
@@ -274,8 +295,8 @@ export default function SkeletonPage() {
               <FolderTree tree={folderTree} isGenerating={isGenerating} />
             </div>
             <div className="w-1/2 flex flex-col overflow-hidden p-4">
-              <div className="text-xs font-semibold uppercase tracking-wide text-[#00ffe0] font-mono mb-3">SPRINT 1 WIREFRAME</div>
-              <WireframePreview html={wireframeHtml} isLoading={isGenerating} />
+              <div className="text-xs font-semibold uppercase tracking-wide text-[#00ffe0] font-mono mb-3">WIREFRAMES</div>
+              <WireframePreview htmls={wireframeHtmls} isLoading={isGenerating} />
             </div>
           </div>
         </>

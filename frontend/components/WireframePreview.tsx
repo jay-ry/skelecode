@@ -1,57 +1,100 @@
 "use client";
+import { useState, useEffect } from "react";
 
 interface WireframePreviewProps {
-  html: string;             // complete HTML string from wireframe_builder
-  isLoading?: boolean;      // true while waiting for the wireframe event
+  htmls: Record<number, string>; // sprint_number → html
+  isLoading?: boolean;
 }
 
 /**
- * Renders a wireframe HTML string inside a sandboxed iframe.
- *
- * SECURITY (RESEARCH.md Pitfall 5):
- *   sandbox="allow-scripts" allows inline <script> tags in generated HTML but
- *   BLOCKS navigation, form submission, and access to the parent page's DOM/cookies.
- *   Do NOT add any extra sandbox permissions — keeping it to allow-scripts only
- *   ensures iframe cannot access parent DOM, cookies, or localStorage (XSS defense).
+ * SECURITY: sandbox="allow-scripts" permits inline <script> tags but blocks
+ * navigation, form submission, and parent DOM/cookie access. Do NOT add any
+ * extra sandbox permissions.
  */
-export function WireframePreview({ html, isLoading = false }: WireframePreviewProps) {
+export function WireframePreview({ htmls, isLoading = false }: WireframePreviewProps) {
+  const sprintNumbers = Object.keys(htmls)
+    .map(Number)
+    .sort((a, b) => a - b);
+
+  const [activeTab, setActiveTab] = useState<number>(sprintNumbers[0] ?? 1);
+
+  // When new sprints arrive during streaming, auto-advance to the latest
+  useEffect(() => {
+    if (sprintNumbers.length > 0) {
+      setActiveTab(sprintNumbers[sprintNumbers.length - 1]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sprintNumbers.length]);
+
+  const activeHtml = htmls[activeTab] ?? "";
+
   const handleOpenInNewTab = () => {
-    if (!html) return;
-    const blob = new Blob([html], { type: "text/html" });
+    if (!activeHtml) return;
+    const blob = new Blob([activeHtml], { type: "text/html" });
     const url = URL.createObjectURL(blob);
     window.open(url, "_blank");
-    // Do NOT revoke URL immediately — the new tab needs it alive.
   };
 
+  const isEmpty = sprintNumbers.length === 0;
+
   return (
-    <div className="w-full flex flex-col gap-2">
-      {isLoading && !html ? (
+    <div className="flex-1 min-h-0 flex flex-col gap-2">
+      {/* Tab bar — only shown once at least one wireframe exists */}
+      {!isEmpty && (
+        <div className="flex gap-1 flex-wrap shrink-0">
+          {sprintNumbers.map((n) => (
+            <button
+              key={n}
+              type="button"
+              onClick={() => setActiveTab(n)}
+              className={`text-xs px-3 py-1 rounded border font-mono transition-colors ${
+                activeTab === n
+                  ? "border-[#00ffe0] text-[#00ffe0] bg-[#050d14]"
+                  : "border-[rgba(0,255,224,0.15)] text-[#7abfb8] hover:border-[#00ffe0] hover:text-[#c8f0ea]"
+              }`}
+            >
+              Sprint {n}
+            </button>
+          ))}
+          {isLoading && (
+            <span className="text-xs px-3 py-1 text-[#7abfb8] font-mono animate-pulse">
+              generating…
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Iframe / placeholder */}
+      {isLoading && isEmpty ? (
         <div
-          className="flex items-center justify-center h-[500px] border border-[rgba(0,255,224,0.15)] rounded text-sm text-[#7abfb8] font-mono animate-pulse"
+          className="flex-1 flex items-center justify-center border border-[rgba(0,255,224,0.15)] rounded text-sm text-[#7abfb8] font-mono animate-pulse"
           role="status"
         >
-          Generating wireframe...
+          Generating wireframes…
         </div>
-      ) : html ? (
+      ) : !isEmpty ? (
         <iframe
-          srcDoc={html}
+          key={activeTab}
+          srcDoc={activeHtml}
           sandbox="allow-scripts"
-          className="w-full h-[500px] border border-[rgba(0,255,224,0.15)] rounded"
-          title="Sprint 1 wireframe preview"
+          className="flex-1 min-h-0 w-full border border-[rgba(0,255,224,0.15)] rounded"
+          title={`Sprint ${activeTab} wireframe preview`}
         />
       ) : (
         <div
-          className="flex items-center justify-center h-[500px] border border-[rgba(0,255,224,0.15)] rounded text-sm text-[#7abfb8]"
+          className="flex-1 flex items-center justify-center border border-[rgba(0,255,224,0.15)] rounded text-sm text-[#7abfb8]"
           role="status"
         >
-          Wireframe will appear here after generation.
+          Wireframes will appear here after generation.
         </div>
       )}
-      <div className="flex justify-end mt-1">
+
+      {/* Actions */}
+      <div className="flex justify-end shrink-0">
         <button
           type="button"
           onClick={handleOpenInNewTab}
-          disabled={!html}
+          disabled={!activeHtml}
           className="text-sm px-3 py-1 border border-[rgba(0,255,224,0.15)] rounded text-[#c8f0ea] hover:bg-[#050d14] hover:border-[#00ffe0] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         >
           Open in new tab

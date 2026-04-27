@@ -39,6 +39,7 @@ async def skeleton_endpoint(req: SkeletonRequest):
         file_list=[],
         folder_tree="",
         wireframe_html="",
+        wireframe_htmls=[],
         status="resolving",
     )
 
@@ -56,8 +57,9 @@ async def skeleton_endpoint(req: SkeletonRequest):
                     for line in data["folder_tree"].split("\n"):
                         yield f"data: {json.dumps({'type': 'tree_line', 'line': line})}\n\n"
 
-                elif node_name == "wireframe_builder" and data.get("wireframe_html"):
-                    yield f"data: {json.dumps({'type': 'wireframe', 'html': data['wireframe_html']})}\n\n"
+                elif node_name == "wireframe_builder":
+                    for i, html in enumerate(data.get("wireframe_htmls") or []):
+                        yield f"data: {json.dumps({'type': 'wireframe', 'sprint_number': i + 1, 'html': html})}\n\n"
 
         except Exception as e:  # noqa: BLE001
             logger.exception("skeleton endpoint failed")

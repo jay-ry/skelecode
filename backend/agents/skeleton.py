@@ -36,7 +36,7 @@ llm_tree_builder = ChatGroq(
 llm_wireframe_builder = ChatGroq(
     model="llama-3.3-70b-versatile",
     temperature=0.5,
-    max_tokens=1500,
+    max_tokens=4096,
 )
 
 # Defensive default — used when stack_resolver cannot parse LLM output (Pitfall 6)
@@ -103,26 +103,30 @@ async def tree_builder(state: SkeletonState) -> dict:
 
 
 async def wireframe_builder(state: SkeletonState) -> dict:
-    """Generate Sprint 1 HTML wireframe. Falls back to canned HTML on any failure."""
+    """Generate one HTML wireframe per sprint. Falls back to canned HTML per sprint on failure."""
     sprints = state.get("sprints") or []
     if not sprints:
-        return {"wireframe_html": FALLBACK_WIREFRAME, "status": "done"}
+        return {"wireframe_htmls": [FALLBACK_WIREFRAME], "wireframe_html": FALLBACK_WIREFRAME, "status": "done"}
 
-    sprint_1 = sprints[0]
-    messages = [
-        SystemMessage(content=WIREFRAME_BUILDER_PROMPT),
-        HumanMessage(content=f"Sprint 1:\n\n{json.dumps(sprint_1)}"),
-    ]
-    try:
-        response = await llm_wireframe_builder.ainvoke(messages)
-        raw = response.content if hasattr(response, "content") else str(response)
-        html = _strip_markdown_fences(raw)
-        if not html.lstrip().startswith("<"):
-            raise ValueError("wireframe output is not HTML")
-    except Exception as e:  # noqa: BLE001
-        logger.warning("wireframe_builder fell back to canned HTML: %s", e)
-        html = FALLBACK_WIREFRAME
-    return {"wireframe_html": html, "status": "done"}
+    htmls: list[str] = []
+    for sprint in sprints:
+        sprint_number = sprint.get("number", len(htmls) + 1)
+        messages = [
+            SystemMessage(content=WIREFRAME_BUILDER_PROMPT),
+            HumanMessage(content=f"Sprint {sprint_number}:\n\n{json.dumps(sprint)}"),
+        ]
+        try:
+            response = await llm_wireframe_builder.ainvoke(messages)
+            raw = response.content if hasattr(response, "content") else str(response)
+            html = _strip_markdown_fences(raw)
+            if not html.lstrip().startswith("<"):
+                raise ValueError("wireframe output is not HTML")
+        except Exception as e:  # noqa: BLE001
+            logger.warning("wireframe_builder sprint %s fell back to canned HTML: %s", sprint_number, e)
+            html = FALLBACK_WIREFRAME
+        htmls.append(html)
+
+    return {"wireframe_htmls": htmls, "wireframe_html": htmls[0], "status": "done"}
 
 
 # Compile graph at module load — 3-node linear (no conditionals)

@@ -111,7 +111,7 @@ export function FolderTree({ tree, isGenerating = false }: FolderTreeProps) {
               if (visibility.has(line.idx)) return null;
               if (line.isDirectory) {
                 const isCollapsed = collapsed.has(line.idx);
-                const indicator = isCollapsed ? "▶" : "▼";
+                const indicator = isCollapsed ? " ▶" : " ▼";
                 return (
                   <div
                     key={line.idx}
@@ -124,9 +124,8 @@ export function FolderTree({ tree, isGenerating = false }: FolderTreeProps) {
                     role={isGenerating ? undefined : "button"}
                     aria-expanded={isGenerating ? undefined : !isCollapsed}
                   >
-                    <span className="text-[#00ffe0]">{indicator}</span>
-                    {" "}
                     {line.raw}
+                    <span className="text-[#00ffe0]">{indicator}</span>
                   </div>
                 );
               }

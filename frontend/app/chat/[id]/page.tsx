@@ -61,10 +61,6 @@ export default function ChatPage() {
     <div className="flex flex-col h-screen">
       <Header
         projectId={projectId}
-        backHref="/"
-        backLabel="← Dashboard"
-        forwardHref={hasProject ? `/sprints/${projectId}` : undefined}
-        forwardLabel="Plan Sprints →"
         onTogglePreview={() => setPreviewOpen((v) => !v)}
         previewOpen={previewOpen}
         onStartOver={() => router.push("/")}
