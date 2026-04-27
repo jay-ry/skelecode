@@ -10,3 +10,8 @@ Fields to extract:
 - features: the 3-5 core MVP features
 - stack: the preferred tech stack
 - constraints: any stated budget, timeline, or technical constraints
+- monetization: the pricing model or revenue approach described by the user.
+  Return null if monetization was never mentioned in the conversation.
+- sprint_count_hint: rough number of sprints implied by project scope
+  (e.g. "3-4 sprints" for a small project, "6-8 sprints" for large).
+  Return null if not discussed.
