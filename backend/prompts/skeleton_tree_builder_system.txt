@@ -13,10 +13,13 @@ Stack-specific templates:
 Next.js frontend:
   - frontend/app/layout.tsx
   - frontend/app/page.tsx
+  - frontend/middleware.ts
   - frontend/components/Header.tsx
   - frontend/lib/
   - frontend/public/
   - frontend/next.config.ts
+  - frontend/tailwind.config.ts
+  - frontend/.env.example
   - frontend/package.json
   - frontend/tsconfig.json
 
@@ -36,4 +39,4 @@ Neon / Postgres:
 Combine the templates appropriate to the given stack. If db is null, omit the migrations entry.
 
 Example output for {"frontend": "Next.js", "backend": "FastAPI", "db": "Neon"}:
-["backend/.env.example","backend/agents/","backend/api/","backend/db/","backend/main.py","backend/models/","backend/requirements.txt","backend/utils/","frontend/app/layout.tsx","frontend/app/page.tsx","frontend/components/Header.tsx","frontend/lib/","frontend/next.config.ts","frontend/package.json","frontend/public/","frontend/tsconfig.json","migrations/001_init.sql"]
+["backend/.env.example","backend/agents/","backend/api/","backend/db/","backend/main.py","backend/models/","backend/requirements.txt","backend/utils/","frontend/.env.example","frontend/app/layout.tsx","frontend/app/page.tsx","frontend/components/Header.tsx","frontend/lib/","frontend/middleware.ts","frontend/next.config.ts","frontend/package.json","frontend/public/","frontend/tailwind.config.ts","frontend/tsconfig.json","migrations/001_init.sql"]
