@@ -27,6 +27,16 @@ class ExtractedFields(BaseModel):
         None,
         description="Budget, timeline, team size, or technical constraints. Use 'none stated' if absent."
     )
+    monetization: Optional[str] = Field(
+        None,
+        description="Pricing model or revenue approach described by the user. "
+                    "Return null if not mentioned."
+    )
+    sprint_count_hint: Optional[str] = Field(
+        None,
+        description="Rough number of sprints implied by project scope, e.g. '4-6'. "
+                    "Return null if not discussed."
+    )
 
 
 class BrainstormState(TypedDict):
