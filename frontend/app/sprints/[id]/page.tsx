@@ -4,18 +4,12 @@ import { useParams } from "next/navigation";
 import JSZip from "jszip";
 import { Header } from "../../../components/Header";
 import { SprintList } from "../../../components/SprintList";
-
-interface Sprint {
-  number: number;
-  goal: string;
-  user_stories: string[];
-  technical_tasks: string[];
-  definition_of_done: string[];
-}
+import type { Sprint } from "../../../types/sprint";
 
 interface SprintRowApi {
   sprintNumber: number;
   goal: string | null;
+  contentMd: string | null;
   sprintData: Partial<Sprint> | null;
 }
 
@@ -29,9 +23,17 @@ function rehydrateSprints(rows: SprintRowApi[]): Sprint[] {
   return rows
     .map((row) => {
       const blob = row.sprintData;
+      // Prefer the dedicated contentMd column; fall back to a content_md
+      // embedded in legacy sprintData blobs; finally an empty string so
+      // the type is satisfied (SprintCard treats "" as "use legacy fallback").
+      const contentMd =
+        row.contentMd ??
+        (typeof blob?.content_md === "string" ? blob.content_md : null) ??
+        "";
       return {
         number: blob?.number ?? row.sprintNumber,
         goal: blob?.goal ?? row.goal ?? "",
+        content_md: contentMd,
         user_stories: blob?.user_stories ?? [],
         technical_tasks: blob?.technical_tasks ?? [],
         definition_of_done: blob?.definition_of_done ?? [],
@@ -45,13 +47,13 @@ function formatSprintMarkdown(sprint: Sprint): string {
     `# Sprint ${sprint.number}: ${sprint.goal}`,
     "",
     "## User Stories",
-    ...sprint.user_stories.map((s) => `- ${s}`),
+    ...(sprint.user_stories ?? []).map((s) => `- ${s}`),
     "",
     "## Technical Tasks",
-    ...sprint.technical_tasks.map((t) => `- ${t}`),
+    ...(sprint.technical_tasks ?? []).map((t) => `- ${t}`),
     "",
     "## Definition of Done",
-    ...sprint.definition_of_done.map((d) => `- ${d}`),
+    ...(sprint.definition_of_done ?? []).map((d) => `- ${d}`),
     "",
   ].join("\n");
 }
@@ -161,7 +163,11 @@ export default function SprintsPage() {
     if (isGenerating || sprints.length === 0) return;
     const zip = new JSZip();
     for (const sprint of sprints) {
-      zip.file(`sprint-${sprint.number}.md`, formatSprintMarkdown(sprint));
+      const md =
+        sprint.content_md && sprint.content_md.trim().length > 0
+          ? sprint.content_md
+          : formatSprintMarkdown(sprint);
+      zip.file(`sprint-${sprint.number}.md`, md);
     }
     const blob = await zip.generateAsync({ type: "blob" });
     const url = URL.createObjectURL(blob);
