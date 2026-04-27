@@ -4,3 +4,8 @@ node_modules/
 # AI assistant / IDE tool config
 .claude/
 .cursor/
+
+# Planning and docs
+.planning/
+plan/
+docs/
