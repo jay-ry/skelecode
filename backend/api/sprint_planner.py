@@ -32,8 +32,9 @@ async def sprint_planner_endpoint(req: SprintPlannerRequest):
     async def event_stream():
         try:
             # stream_mode="updates" yields {node_name: partial_state_dict} per node.
-            # Planner has ONE node — we get ONE event with all sprints, then iterate
-            # to emit one SSE frame per sprint. (RESEARCH.md Pitfall 5)
+            # Planner has ONE node — we get ONE event with all sprints (each is
+            # {number: int, goal: str, content_md: str} per phase 5 D-03/D-04), then
+            # iterate to emit one SSE frame per sprint.
             async for event in graph.astream(init_state, stream_mode="updates"):
                 node_name = list(event.keys())[0]
                 data = list(event.values())[0]
