@@ -12,5 +12,10 @@ Rules:
 - If no stack is stated, use defaults: {"frontend": "Next.js", "backend": "FastAPI", "db": "Neon"}.
 - Output ONLY the JSON object. No markdown fences, no explanation, no prose.
 
+Common stack defaults — apply when the user mentions one of these by name:
+- "T3 stack" or "T3" → {"frontend": "Next.js", "backend": "Next.js API routes", "db": "Neon"}
+- "Django + React" or "Django and React" → {"frontend": "React", "backend": "Django", "db": "Postgres"}
+- "Rails" → {"frontend": "Rails ERB", "backend": "Rails", "db": "Postgres"}
+
 Example output:
 {"frontend": "Next.js", "backend": "FastAPI", "db": "Neon"}
